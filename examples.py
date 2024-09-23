@@ -1,42 +1,64 @@
 examples = [
     {
-        "input": "List all customers in France with a credit limit over 20,000.",
-        "query": "SELECT * FROM customers WHERE country = 'France' AND creditLimit > 20000;"
+        "input": "List all students graduating in 2025.",
+        "query": "SELECT * FROM student_detils WHERE graduation_year = 2025;"
     },
     {
-        "input": "Get the highest payment amount made by any customer.",
-        "query": "SELECT MAX(amount) FROM payments;"
+        "input": "Get the names of students with no backlogs.",
+        "query": "SELECT name FROM student_detils WHERE backlogs = 0;"
     },
     {
-        "input": "Show product details for products in the 'Motorcycles' product line.",
-        "query": "SELECT * FROM products WHERE productLine = 'Motorcycles';"
+        "input": "Show details of students studying Physics.",
+        "query": "SELECT * FROM student_detils WHERE subjects LIKE '%Physics%';"
     },
     {
-        "input": "Retrieve the names of employees who report to employee number 1002.",
-        "query": "SELECT firstName, lastName FROM employees WHERE reportsTo = 1002;"
+        "input": "Retrieve the names of students who got an A grade.",
+        "query": "SELECT name FROM student_detils WHERE grades LIKE '%A%';"
     },
     {
-        "input": "List all products with a stock quantity less than 7000.",
-        "query": "SELECT productName, quantityInStock FROM products WHERE quantityInStock < 7000;"
+        "input": "List all students with a class ranking better than 50.",
+        "query": "SELECT name, class_ranking FROM student_detils WHERE class_ranking < 50;"
     },
     {
-     'input':"what is price of `1968 Ford Mustang`",
-     "query": "SELECT `buyPrice`, `MSRP` FROM products  WHERE `productName` = '1968 Ford Mustang' LIMIT 1;"
+        "input": "What is the phone number of the student named 'John Smith'?",
+        "query": "SELECT phone_number FROM student_detils WHERE name = 'John Smith';"
+    },
+    {
+        "input": "Count the number of students graduating in each year.",
+        "query": "SELECT graduation_year, COUNT(*) as student_count FROM student_detils GROUP BY graduation_year;"
+    },
+    {
+        "input": "Find the average number of backlogs across all students.",
+        "query": "SELECT AVG(backlogs) as average_backlogs FROM student_detils;"
+    },
+    {
+        "input": "List the names of top 10 students based on class ranking.",
+        "query": "SELECT name, class_ranking FROM student_detils ORDER BY class_ranking ASC LIMIT 10;"
+    },
+    {
+        "input": "Show the names of students studying both Mathematics and Computer Science.",
+        "query": "SELECT name FROM student_detils WHERE subjects LIKE '%Mathematics%' AND subjects LIKE '%Computer Science%';"
     }
 ]
 
-from langchain_community.vectorstores import Chroma
+
+from langchain_community.vectorstores import FAISS
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 
 @st.cache_resource
 def get_example_selector():
-    example_selector = SemanticSimilarityExampleSelector.from_examples(
-        examples,
-        OpenAIEmbeddings(),
-        Chroma,
-        k=2,
-        input_keys=["input"],
-    )
-    return example_selector
+    try:
+        embeddings = OpenAIEmbeddings()
+        example_selector = SemanticSimilarityExampleSelector.from_examples(
+            examples,
+            embeddings,
+            FAISS,
+            k=2,
+            input_keys=["input"],
+        )
+        return example_selector
+    except Exception as e:
+        st.error(f"Error creating example selector: {str(e)}")
+        raise
