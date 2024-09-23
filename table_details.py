@@ -5,7 +5,7 @@ from langchain.chains.openai_tools import create_extraction_chain_pydantic
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 
-llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 from typing import List
 
 @st.cache_data
