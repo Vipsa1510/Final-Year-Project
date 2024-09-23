@@ -6,8 +6,8 @@ db_host = os.environ["db_host"]
 db_name = os.environ["db_name"]
 
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-# LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2")
-# LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY")
+print(OPENAI_API_KEY)
+
 
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.chains import create_sql_query_chain
@@ -30,13 +30,9 @@ import streamlit as st
 @st.cache_resource
 def get_chain():
     print("Creating chain")
-    db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}")
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-    # model_id = "meta.llama2-70b-chat-v1"
-
-    # llm = Bedrock(
-    #     credentials_profile_name="default", model_id=model_id,model_kwargs=model_kwargs
-    # )
+    db = SQLDatabase.from_uri(
+    f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}")    
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     generate_query = create_sql_query_chain(llm, db, final_prompt)
     execute_query = QuerySQLDataBaseTool(db=db)
     rephrase_answer = answer_prompt | llm | StrOutputParser()
@@ -66,6 +62,17 @@ def invoke_chain(question, messages):
     chain = get_chain()
     history = create_history(messages)
     response = chain.invoke({"question": question, "top_k": 3, "messages": history.messages})
+    
+    error_keywords = [
+        "error in the SQL query",
+        "type mismatch",
+        "cast",
+        "column is likely of type",
+    ]
+    
+    if any(keyword in response.lower() for keyword in error_keywords):
+        response = "I'm sorry, I couldn't understand the question or find the relevant information."
+
     history.add_user_message(question)
     history.add_ai_message(response)
     return response
