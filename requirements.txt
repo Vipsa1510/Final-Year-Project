@@ -1,10 +1,7 @@
 openai
-plotly
-pandas
-numpy
 langchain
 pymysql
-chromadb
+faiss-cpu
 langchain_openai
 langchain_community
 streamlit
